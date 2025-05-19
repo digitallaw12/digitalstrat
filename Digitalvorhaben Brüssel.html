@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EU-Digitalstrategie – Dashboard der Regulierungsvorhaben</title>
+    <style>
+        :root {
+            --primary-color: #0056b3; /* Dunkleres Blau für bessere Kontraste */
+            --secondary-color: #0078d4;
+            --light-gray: #f4f6f8;
+            --medium-gray: #e9ecef;
+            --dark-gray: #343a40;
+            --text-color: #212529;
+            --card-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            --card-hover-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            --border-radius: 8px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--light-gray);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+
+        header h1 {
+            color: var(--primary-color);
+            font-size: 2.5em;
+            margin-bottom: 0.5em;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+        }
+
+        .search-container input,
+        .filter-container select {
+            padding: 10px 12px;
+            border: 1px solid var(--medium-gray);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            min-width: 200px;
+        }
+
+        .search-container input:focus,
+        .filter-container select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25);
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.9em;
+        }
+
+        .legend-color {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            margin-right: 8px;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        .info-box {
+            background-color: #e7f3ff;
+            border-left: 5px solid var(--primary-color);
+            padding: 15px 20px;
+            margin-bottom: 30px;
+            border-radius: var(--border-radius);
+        }
+
+        .info-box h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+            font-size: 1.2em;
+        }
+        .info-box p {
+            margin-bottom: 0.5em;
+            font-size: 0.95em;
+        }
+        .info-box strong {
+            color: var(--dark-gray);
+        }
+
+        .timeline-container {
+            position: relative;
+            margin: 50px 0 70px; /* Increased bottom margin */
+            padding: 20px 0;
+            border-top: 4px solid var(--primary-color);
+            min-height: 50px; /* Ensure space for markers */
+        }
+
+        .timeline-marker {
+            position: absolute;
+            top: -12px; /* Adjust based on border-top width */
+            transform: translateX(-50%);
+            padding: 6px 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: var(--border-radius);
+            font-size: 0.85em;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .no-results {
+            text-align: center;
+            font-size: 1.2em;
+            color: var(--dark-gray);
+            padding: 20px;
+        }
+
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            justify-content: center;
+        }
+
+        .card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            padding: 25px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-top: 5px solid var(--medium-gray); /* Default color, will be overridden */
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--card-hover-shadow);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.4em;
+            color: var(--primary-color);
+            margin-bottom: 0.75em;
+        }
+
+        .card p {
+            margin: 0 0 10px 0;
+            font-size: 0.95em;
+            flex-grow: 1;
+        }
+        .card .date-info {
+            font-size: 0.85em;
+            color: #555;
+            margin-bottom: 15px;
+        }
+
+        .card .labels-container {
+            margin-top: auto; /* Pushes labels to the bottom if card content is short */
+            padding-top: 10px;
+        }
+
+        .card .label {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            color: white;
+            font-weight: 500;
+        }
+        .label.label-relevance {
+            background-color: #6c757d; /* Bootstrap secondary gray */
+        }
+
+        .details-dialog {
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 0; /* Padding will be in the panel */
+            max-width: 850px;
+            width: 90%;
+            max-height: 90vh;
+        }
+
+        .details-dialog::backdrop {
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(3px);
+        }
+
+        .details-panel {
+            padding: 30px;
+            position: relative;
+            max-height: calc(90vh - 60px); /* Consider padding */
+            overflow-y: auto;
+        }
+        
+        .details-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--medium-gray);
+            padding-bottom: 15px;
+        }
+
+        .details-panel-header h2 {
+            margin-top: 0;
+            margin-bottom: 0;
+            color: var(--primary-color);
+            font-size: 1.8em;
+        }
+        
+        .details-panel .status-pill {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            color: white;
+            margin-left: 15px;
+            vertical-align: middle;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #888;
+            padding: 5px;
+            line-height: 1;
+        }
+
+        .close-button:hover {
+            color: var(--dark-gray);
+        }
+
+        .details-section {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+        }
+        .details-section:not(:last-child) {
+             border-bottom: 1px solid var(--light-gray);
+        }
+
+        .details-section h3 {
+            margin-top: 0;
+            color: var(--secondary-color);
+            font-size: 1.25em;
+            margin-bottom: 0.5em;
+        }
+        .details-section p {
+            margin-bottom: 0.5em;
+        }
+
+        /* Status colors */
+        .status-anwendbar { background-color: #28a745; } /* Green */
+        .status-inKraftGetreten { background-color: #17a2b8; } /* Teal */
+        .status-inUmsetzung { background-color: #ffc107; color: var(--dark-gray) !important; } /* Yellow */
+        .status-inVerhandlung { background-color: #fd7e14; } /* Orange */
+        .status-geplant { background-color: #6f42c1; } /* Indigo */
+
+        .last-updated {
+            text-align: center;
+            font-style: italic;
+            color: #666;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid var(--medium-gray);
+            font-size: 0.9em;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2em;
+            }
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .search-container input,
+            .filter-container select {
+                width: 100%;
+                box-sizing: border-box; /* Ensure padding doesn't break layout */
+            }
+            .cards-container {
+                grid-template-columns: 1fr; /* Stack cards on smaller screens */
+            }
+             .details-dialog {
+                width: 95%;
+                max-height: 95vh;
+            }
+            .details-panel-header h2 {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>EU-Digitalstrategie</h1>
+            <p>Dashboard der wichtigsten Regulierungsvorhaben</p>
+        </header>
+
+        <main>
+            <div class="controls">
+                <div class="search-container">
+                    <input type="text" id="search-input" placeholder="Suche nach Gesetz, Stichwort...">
+                </div>
+                <div class="filter-container">
+                    <select id="status-filter">
+                        <option value="all">Alle Status</option>
+                        <option value="anwendbar">Anwendbar</option>
+                        <option value="inKraftGetreten">In Kraft getreten</option>
+                        <option value="inUmsetzung">In Umsetzung</option>
+                        <option value="inVerhandlung">In Verhandlung</option>
+                        <option value="geplant">Geplant</option>
+                    </select>
+                    <select id="relevance-filter">
+                        <option value="all">Alle Bereiche</option>
+                        <option value="datenschutz">Datenschutz</option>
+                        <option value="plattformen">Plattformen</option>
+                        <option value="cybersicherheit">Cybersicherheit</option>
+                        <option value="finanzsektor">Finanzsektor</option>
+                        <option value="ki">Künstliche Intelligenz</option>
+                        <option value="gesundheit">Gesundheit</option>
+                        <option value="medien">Medien</option>
+                        <option value="verwaltung">Verwaltung</option>
+                        <option value="industrie">Industrie</option>
+                        <option value="arbeit">Arbeit</option>
+                        <option value="produktsicherheit">Produktsicherheit</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item"><div class="legend-color status-anwendbar"></div><span>Anwendbar</span></div>
+                <div class="legend-item"><div class="legend-color status-inKraftGetreten"></div><span>In Kraft getreten</span></div>
+                <div class="legend-item"><div class="legend-color status-inUmsetzung" style="color: var(--dark-gray);"></div><span style="color: var(--text-color);">In Umsetzung</span></div>
+                <div class="legend-item"><div class="legend-color status-inVerhandlung"></div><span>In Verhandlung</span></div>
+                <div class="legend-item"><div class="legend-color status-geplant"></div><span>Geplant</span></div>
+            </div>
+            
+            <div class="info-box">
+                <h3>Begriffserklärung zum EU-Gesetzgebungsprozess</h3>
+                <p><strong>Veröffentlichung im Amtsblatt:</strong> Offizielle Publikation des Rechtsakts im Amtsblatt der Europäischen Union.</p>
+                <p><strong>Inkrafttreten:</strong> Formelles Inkrafttreten des Rechtsakts, typischerweise 20 Tage nach Veröffentlichung.</p>
+                <p><strong>Geltungsbeginn/Anwendbarkeit:</strong> Zeitpunkt, ab dem die Bestimmungen tatsächlich angewendet werden müssen. Bei Verordnungen kann dieser später als das Inkrafttreten liegen; bei Richtlinien ist dies der Zeitpunkt, bis zu dem die nationale Umsetzung erfolgt sein muss.</p>
+                <p><strong>Status "Anwendbar":</strong> Der Rechtsakt ist in Kraft und seine Bestimmungen müssen bereits angewendet werden.</p>
+                <p><strong>Status "In Kraft getreten":</strong> Der Rechtsakt ist formell in Kraft, aber die Frist zur Anwendung bzw. nationalen Umsetzung läuft noch oder ist gestaffelt.</p>
+            </div>
+
+            <div class="timeline-container" id="timeline-container">
+                <!-- Timeline markers will be inserted here by JavaScript -->
+            </div>
+
+            <div class="cards-container" id="laws-container">
+                <!-- Cards will be inserted here by JavaScript -->
+            </div>
+        </main>
+
+        <dialog class="details-dialog" id="details-dialog">
+            <div class="details-panel" id="details-panel-content">
+                <!-- Details content will be inserted here by JavaScript -->
+            </div>
+        </dialog>
+
+        <footer class="last-updated">
+            Zuletzt aktualisiert: <span id="last-updated-date"></span> (Inhalte basierend auf verfügbaren Informationen bis Mai 2025)
+        </footer>
+    </div>
+
+    <script>
+        const digitalLaws = [
+            {
+                id: 'dma',
+                title: 'Digital Markets Act (DMA)',
+                shortDescription: 'Sorgt für faire und offene digitale Märkte und adressiert Gatekeeper-Plattformen.',
+                status: 'anwendbar', // Verordnung (EU) 2022/1925
+                relevance: ['plattformen', 'wettbewerb'],
+                veroeffentlichung: '12.10.2022',
+                inkrafttreten: '01.11.2022',
+                geltungsbeginn: '02.05.2023 (teilweise), Gatekeeper-Benennung 06.09.2023, volle Anwendbarkeit der Pflichten für Gatekeeper seit 06.03.2024.',
+                timelineYear: 2024, 
+                details: {
+                    ziel: 'Der Digital Markets Act (DMA) zielt darauf ab, die Märkte im digitalen Sektor bestreitbarer und fairer zu gestalten. Er legt Verpflichtungen für große Online-Plattformen fest, die als "Gatekeeper" agieren, um unlautere Praktiken zu verhindern und Innovation, Wettbewerb sowie die Wahlmöglichkeiten der Verbraucher zu fördern.',
+                    adressaten: 'Sogenannte "Gatekeeper": Große digitale Plattformen, die als zentrale Schnittstellen zwischen gewerblichen Nutzern und Endnutzern dienen. Die EU-Kommission hat Alphabet, Amazon, Apple, ByteDance, Meta und Microsoft als Gatekeeper für 22 zentrale Plattformdienste benannt.',
+                    auswirkungVerwaltung: 'Indirekte Auswirkungen: Landesverwaltungen können als Nutzer von Gatekeeper-Diensten von faireren Bedingungen profitieren. Bei der Beschaffung von IT-Dienstleistungen könnten sich neue Optionen ergeben. Eigene Plattformen der Verwaltung fallen i.d.R. nicht unter den DMA.',
+                    aufsicht: 'Die Europäische Kommission ist primär für die Überwachung und Durchsetzung des DMA zuständig. Nationale Wettbewerbsbehörden können unterstützen. In Deutschland ist das Bundeskartellamt maßgeblich beteiligt (siehe §19a GWB für erweiterte Befugnisse).',
+                    durchfuehrungsgesetze: 'Als EU-Verordnung ist der DMA unmittelbar anwendbar. Die nationale Begleitgesetzgebung, wie die 11. GWB-Novelle (sog. GWB-Digitalisierungsgesetz), regelt Zuständigkeiten und Befugnisse des Bundeskartellamtes. Das Digitale Dienste Gesetz (DDG) dient primär der DSA-Umsetzung, nicht dem DMA.'
+                }
+            },
+            {
+                id: 'dsa',
+                title: 'Digital Services Act (DSA)',
+                shortDescription: 'Regelt Verantwortlichkeiten von Online-Plattformen zur Bekämpfung illegaler Inhalte und zum Schutz der Nutzer.',
+                status: 'anwendbar', // Verordnung (EU) 2022/2065
+                relevance: ['plattformen', 'datenschutz', 'medien'],
+                veroeffentlichung: '27.10.2022',
+                inkrafttreten: '16.11.2022',
+                geltungsbeginn: 'Vollständig anwendbar seit 17.02.2024 (für VLOPs/VLOSEs bereits seit 25.08.2023).',
+                timelineYear: 2024,
+                details: {
+                    ziel: 'Der Digital Services Act (DSA) zielt darauf ab, einen sichereren digitalen Raum zu schaffen, in dem die Grundrechte der Nutzer geschützt werden. Er harmonisiert Pflichten für Anbieter von Vermittlungsdiensten bezüglich illegaler Inhalte, Desinformation und Transparenz von Algorithmen und Online-Werbung.',
+                    adressaten: 'Alle Anbieter von Vermittlungsdiensten in der EU. Strengere Regeln gelten für sehr große Online-Plattformen (VLOPs) und Suchmaschinen (VLOSEs).',
+                    auswirkungVerwaltung: 'Landesverwaltungen, die Online-Dienste mit Nutzerinhalten anbieten, müssen DSA-Pflichten prüfen. Sie profitieren von klareren Meldewegen für illegale Inhalte ("Trusted Flagger"-Status möglich).',
+                    aufsicht: 'EU-Kommission für VLOPs/VLOSEs. National: Koordinatoren für digitale Dienste (in Deutschland: Bundesnetzagentur - BNetzA), unter Beteiligung weiterer Behörden (z.B. Landesmedienanstalten für Medieninhalte, Bundeszentrale für Kinder- und Jugendmedienschutz - BzKJ).',
+                    durchfuehrungsgesetze: 'Das Digitale-Dienste-Gesetz (DDG), das am 14. Mai 2024 in Kraft getreten ist, dient der nationalen Umsetzung des DSA, insbesondere der Regelung von Zuständigkeiten und Aufsichtsstrukturen in Deutschland.'
+                }
+            },
+            {
+                id: 'dga',
+                title: 'Data Governance Act (DGA)',
+                shortDescription: 'Fördert die Verfügbarkeit von Daten zur Nutzung durch Schaffung von Vertrauen und Mechanismen für den Datenaustausch.',
+                status: 'anwendbar', // Verordnung (EU) 2022/868
+                relevance: ['datenschutz', 'verwaltung', 'industrie'],
+                veroeffentlichung: '03.06.2022',
+                inkrafttreten: '23.06.2022',
+                geltungsbeginn: '24.09.2023',
+                timelineYear: 2023,
+                details: {
+                    ziel: 'Der Data Governance Act (DGA) soll die Verfügbarkeit von Daten erhöhen, indem er das Vertrauen in den Datenaustausch stärkt. Er schafft Rahmenbedingungen für die Weiterverwendung geschützter Daten des öffentlichen Sektors, für Datenvermittlungsdienste und datenaltruistische Organisationen.',
+                    adressaten: 'Öffentliche Stellen, Datenvermittlungsdienste und datenaltruistische Organisationen.',
+                    auswirkungVerwaltung: 'Öffentliche Stellen müssen Anträge auf Weiterverwendung von Daten bearbeiten. Der DGA fördert die Datennutzung der öffentlichen Hand. Landesverwaltungen benennen zuständige Stellen.',
+                    aufsicht: 'National zuständige Behörden. In Deutschland: Bundesnetzagentur (BNetzA) für Registrierungen, Statistisches Bundesamt (Destatis) als zentrale Informationsstelle und Kompetenzzentrum für Datenweiterverwendung.',
+                    durchfuehrungsgesetze: 'Das deutsche Datennutzungsgesetz (DNG), das auch den DGA umsetzt, ist in Vorbereitung. Ein Referentenentwurf wurde im Mai 2024 veröffentlicht. Die Benennung der zuständigen Stellen ist erfolgt.'
+                }
+            },
+            {
+                id: 'da',
+                title: 'Data Act (DA)',
+                shortDescription: 'Regelt den fairen Zugang zu und die Nutzung von Daten, insbesondere von IoT-Geräten und verbundenen Diensten.',
+                status: 'inKraftGetreten', // Verordnung (EU) 2023/2854
+                relevance: ['datenschutz', 'industrie', 'iot'],
+                veroeffentlichung: '22.12.2023',
+                inkrafttreten: '11.01.2024',
+                geltungsbeginn: 'Die meisten Bestimmungen sind ab dem 12.09.2025 anwendbar. Anforderungen an das Produktdesign für neue Produkte gelten ab dem 12.09.2026.',
+                timelineYear: 2025,
+                details: {
+                    ziel: 'Der Data Act soll einen fairen Zugang zu Daten gewährleisten und deren Nutzung fördern, insbesondere Daten von vernetzten Produkten (IoT). Er soll Innovation fördern und KMU stärken.',
+                    adressaten: 'Hersteller vernetzter Produkte, Anbieter verbundener Dienste, Nutzer dieser Produkte/Dienste (Unternehmen und Verbraucher), Dateninhaber, Datenempfänger sowie öffentliche Stellen unter bestimmten Bedingungen (B2G-Datenaustausch).',
+                    auswirkungVerwaltung: 'Öffentliche Stellen können unter außergewöhnlichen Umständen Zugang zu Unternehmensdaten verlangen (B2G-Data-Sharing). Vorbereitung auf Rolle als Datennutzer und Prüfung eigener Datenzugangsrechte erforderlich.',
+                    aufsicht: 'Benennung nationaler Aufsichtsbehörden. In Deutschland wird die genaue Zuständigkeit im Rahmen des Datennutzungsgesetzes (DNG) festgelegt (voraussichtlich BNetzA für nicht-personenbezogene Daten; Datenschutzbehörden für personenbezogene Daten).',
+                    durchfuehrungsgesetze: 'Als EU-Verordnung direkt anwendbar. Ein nationales Datennutzungsgesetz (DNG), das auch den Data Act flankiert, ist in Deutschland in Planung bzw. im Entwurfsstadium.'
+                }
+            },
+            {
+                id: 'ehds',
+                title: 'European Health Data Space (EHDS)',
+                shortDescription: 'Erleichtert Zugang und Austausch von Gesundheitsdaten für Primär- und Sekundärnutzung.',
+                status: 'inKraftGetreten', 
+                relevance: ['gesundheit', 'datenschutz', 'forschung'],
+                veroeffentlichung: '05.03.2025 (Verordnung (EU) 2025/327)',
+                inkrafttreten: '26.03.2025',
+                geltungsbeginn: 'Gestaffelt: Interoperabilitätsvorgaben und erste Anwendungen der Primärnutzung (z.B. Patientendatenübersicht, E-Rezepte) ab März 2029. Bestimmungen zur Sekundärnutzung von Daten (z.B. für Forschung) größtenteils ab 26.03.2029, für einige spezifische Datenkategorien (z.B. Daten von Wellness-Anwendungen, Genomdaten) ab 26.03.2031.',
+                timelineYear: 2029, 
+                details: {
+                    ziel: 'Verbesserung des innereuropäischen Austauschs und der Nutzung von Gesundheitsdaten. Stärkung der Rechte Einzelner auf Zugang und Kontrolle ihrer elektronischen Gesundheitsdaten (Primärnutzung) und Ermöglichung der sicheren Nutzung von Gesundheitsdaten für Forschung, Innovation, Politikgestaltung (Sekundärnutzung).',
+                    adressaten: 'Bürger, Angehörige der Gesundheitsberufe, Gesundheitsdienstleister, Forschungseinrichtungen, Industrie, Regulierungsbehörden. Hersteller von Systemen für elektronische Patientenakten (EHR-Systeme) und Wellnessanwendungen.',
+                    auswirkungVerwaltung: 'Aufbau nationaler Kontaktstellen für den EHDS und sogenannter "Health Data Access Bodies" (HDABs) für die Sekundärnutzung von Daten. Anpassung von IT-Systemen im Gesundheitswesen zur Gewährleistung von Interoperabilität. Enge Zusammenarbeit mit Datenschutzbehörden.',
+                    aufsicht: 'Ein EHDS-Board auf EU-Ebene wird eingerichtet. National sind Gesundheitsbehörden, Datenschutzaufsichtsbehörden und die neu zu schaffenden HDABs für die Überwachung und Durchsetzung zuständig.',
+                    durchfuehrungsgesetze: 'Als EU-Verordnung grundsätzlich direkt anwendbar. Nationale Gesetze sind zur Einrichtung der HDABs, nationalen Kontaktstellen und zur Festlegung von Verfahren und Sanktionen erforderlich (ein EHDS-Begleitgesetz ist in Deutschland in Planung).'
+                }
+            },
+            {
+                id: 'aiact',
+                title: 'KI-Verordnung (AI Act)',
+                shortDescription: 'Harmonisierte Regeln für künstliche Intelligenz mit einem risikobasierten Ansatz.',
+                status: 'inKraftGetreten', // Verordnung (EU) 2024/1689
+                relevance: ['ki', 'datenschutz', 'produktsicherheit'],
+                veroeffentlichung: '12.07.2024',
+                inkrafttreten: '01.08.2024',
+                geltungsbeginn: 'Gestaffelt: Verbote für bestimmte KI-Systeme ab 02.02.2025; Regeln für General Purpose AI (GPAI)-Modelle und Governance ab 02.08.2025; die meisten Bestimmungen für Hochrisiko-KI-Systeme ab 02.08.2026; spezifische Pflichten für Hochrisiko-KI-Systeme, die bereits unter andere EU-Harmonisierungsrechtsvorschriften fallen, ab 02.08.2027.',
+                timelineYear: 2025, 
+                details: {
+                    ziel: 'Schaffung eines Rechtsrahmens für die Entwicklung, das Inverkehrbringen und die Nutzung von KI-Systemen in der EU. Risikobasierter Ansatz: Je höher das Risiko, desto strenger die Regeln. Ziele: Sicherheit, Schutz der Grundrechte, Förderung von Innovation und Akzeptanz vertrauenswürdiger KI.',
+                    adressaten: 'Anbieter, Entwickler, Importeure, Händler und Nutzer (Deployer) von KI-Systemen in der EU.',
+                    auswirkungVerwaltung: 'Landesverwaltungen sind als Nutzer (Deployer) von KI-Systemen (z.B. in Justiz, Polizei, bei Sozialleistungen) betroffen und müssen die Konformität sicherstellen. Wenn sie KI-Systeme selbst entwickeln oder wesentlich modifizieren, können sie als Anbieter gelten. Es müssen Governance-Strukturen für den Einsatz von KI etabliert werden.',
+                    aufsicht: 'Ein Europäisches KI-Amt (AI Office) bei der Kommission wird eingerichtet. National müssen Marktüberwachungsbehörden benannt oder geschaffen werden. In Deutschland wird eine koordinierte Aufsichtsstruktur zwischen Bund und Ländern diskutiert, möglicherweise mit Beteiligung von Datenschutzbehörden und Fachaufsichten.',
+                    durchfuehrungsgesetze: 'Nationale Anpassungsgesetze sind zur Benennung der Behörden, Regelung von Sanktionen und Verfahren erforderlich (ein KI-Umsetzungsgesetz ist in Deutschland in Vorbereitung).'
+                }
+            },
+            {
+                id: 'nis2',
+                title: 'NIS-2-Richtlinie',
+                shortDescription: 'Stärkt die Cybersicherheitsanforderungen für ein breiteres Spektrum kritischer Sektoren.',
+                status: 'inUmsetzung', // Richtlinie (EU) 2022/2555
+                relevance: ['cybersicherheit', 'infrastruktur', 'verwaltung'],
+                veroeffentlichung: '27.12.2022',
+                inkrafttreten: '16.01.2023',
+                geltungsbeginn: 'Nationale Umsetzung bis 17.10.2024 erforderlich. Anwendbar ab 18.10.2024 (sofern national umgesetzt). In Deutschland: Das NIS2-Umsetzungsgesetz (NIS2UmsuCG) wird voraussichtlich im Frühjahr 2025 in Kraft treten.',
+                timelineYear: 2025,
+                details: {
+                    ziel: 'Modernisierung des Rechtsrahmens zur Erhöhung des allgemeinen Cybersicherheitsniveaus in der EU. Erweiterter Anwendungsbereich, verschärfte Sicherheits- und Meldepflichten, strengere Aufsicht und Sanktionen.',
+                    adressaten: 'Einrichtungen in "wesentlichen" und "wichtigen" Sektoren (z.B. Energie, Verkehr, Gesundheit, digitale Infrastruktur, öffentliche Verwaltung, Postdienste, Abfallwirtschaft, Chemie, Lebensmittel, verarbeitendes Gewerbe).',
+                    auswirkungVerwaltung: 'Teile der öffentlichen Verwaltung (auf nationaler, regionaler und lokaler Ebene) können explizit unter den Anwendungsbereich fallen. Sie müssen Risikomanagementmaßnahmen ergreifen und Sicherheitsvorfälle melden. Aufsichtsfunktionen für Landesbehörden möglich.',
+                    aufsicht: 'National zuständige Behörden und zentrale Anlaufstellen (in Deutschland: Bundesamt für Sicherheit in der Informationstechnik - BSI - als zentrale nationale Behörde). Fachspezifische Aufsichten können ebenfalls beteiligt sein.',
+                    durchfuehrungsgesetze: 'Das deutsche NIS-2-Umsetzungs- und Cybersicherheits-Stärkungsgesetz (NIS2UmsuCG) befindet sich im parlamentarischen Verfahren; das Inkrafttreten wird im Frühjahr 2025 erwartet und wird das bestehende BSIG umfassend novellieren.'
+                }
+            },
+            {
+                id: 'eidas2',
+                title: 'eIDAS 2.0 Verordnung',
+                shortDescription: 'Führt den Europäischen Digitalen Identitätsrahmen und die EU Digital Identity Wallet ein.',
+                status: 'inKraftGetreten', // Verordnung (EU) 2024/1183
+                relevance: ['verwaltung', 'datenschutz', 'identitaet'],
+                veroeffentlichung: '30.04.2024',
+                inkrafttreten: '20.05.2024',
+                geltungsbeginn: 'Gestaffelt. Mitgliedstaaten müssen die EU Digital Identity Wallet (EUDIW) bis ca. Mai 2026 ausgeben und zertifizieren. Akzeptanzpflichten für öffentliche Stellen und bestimmte private Anbieter ca. ab Mai 2027/2028. Durchführungsakte zur Wallet werden bis Mai 2025 erwartet.',
+                timelineYear: 2026,
+                details: {
+                    ziel: 'Überarbeitung und Erweiterung des eIDAS-Rahmens. Kernstück ist die Einführung einer Europäischen Digitalen Identitätsbörse (EU Digital Identity Wallet, EUDIW), die es Bürgern und Unternehmen ermöglichen soll, ihre Identität und elektronische Attribute sicher und nutzerkontrolliert online und offline nachzuweisen.',
+                    adressaten: 'Mitgliedstaaten (zur Ausgabe der Wallets), Bürger und Unternehmen (als Nutzer der Wallets), öffentliche Dienste und private Dienste (die zur Akzeptanz der Wallet verpflichtet werden, z.B. sehr große Online-Plattformen oder Dienste, bei denen eine starke Nutzerauthentifizierung gesetzlich vorgeschrieben ist).',
+                    auswirkungVerwaltung: 'Landesverwaltungen müssen die technischen Voraussetzungen schaffen, um die EUDIW für ihre Online-Dienste zu akzeptieren. Dies erfordert Anpassungen an Fachverfahren und Portalen. Sie können auch Attribute für die Wallet ausstellen (z.B. Bildungsabschlüsse, Berufszulassungen).',
+                    aufsicht: 'Nationale Aufsichtsstellen gemäß der ursprünglichen eIDAS-Verordnung bleiben relevant, ergänzt um neue Aufgaben im Kontext der Wallet. In Deutschland sind dies primär das Bundesamt für Sicherheit in der Informationstechnik (BSI) und die Bundesnetzagentur (BNetzA) für Vertrauensdienste.',
+                    durchfuehrungsgesetze: 'Obwohl eine Verordnung, sind nationale Durchführungsgesetze zur Konkretisierung, Benennung von Stellen und zur Regelung der Ausgabe und Nutzung der Wallet erforderlich. Ein entsprechendes deutsches Gesetz (eIDAS-Durchführungsgesetz) ist in Vorbereitung.'
+                }
+            },
+             {
+                id: 'cra',
+                title: 'Cyber Resilience Act (CRA)',
+                shortDescription: 'Legt Cybersicherheitsanforderungen für Produkte mit digitalen Elementen fest.',
+                status: 'inKraftGetreten', // Formell angenommen, Veröffentlichung im Amtsblatt und Inkrafttreten Ende 2024/Anfang 2025 erwartet.
+                relevance: ['cybersicherheit', 'produktsicherheit', 'iot'],
+                veroeffentlichung: 'Voraussichtlich Ende 2024 / Anfang 2025',
+                inkrafttreten: '20 Tage nach Veröffentlichung (voraussichtlich Anfang 2025)',
+                geltungsbeginn: 'Die meisten Bestimmungen gelten 36 Monate nach Inkrafttreten (also ca. Anfang 2028). Die Meldepflicht für aktiv ausgenutzte Schwachstellen und Sicherheitsvorfälle durch Hersteller gilt 21 Monate nach Inkrafttreten (also ca. Ende 2026 / Anfang 2027).',
+                timelineYear: 2027, 
+                details: {
+                    ziel: 'Der Cyber Resilience Act (CRA) soll die Cybersicherheit von Produkten mit digitalen Elementen (Hardware und Software) über deren gesamten Lebenszyklus verbessern. Er legt verbindliche Cybersicherheitsanforderungen für Hersteller fest, darunter sichere Entwicklung, Schwachstellenmanagement und Bereitstellung von Sicherheitsupdates.',
+                    adressaten: 'Hersteller, Importeure und Händler von Produkten mit digitalen Elementen, die auf dem EU-Markt bereitgestellt werden. Ausnahmen gelten für bestimmte Sektoren (z.B. Medizinprodukte), die bereits spezifischen Regelungen unterliegen.',
+                    auswirkungVerwaltung: 'Landesverwaltungen als Beschaffer und Nutzer von IT-Produkten profitieren von höheren Sicherheitsstandards. Beschaffungsprozesse müssen ggf. angepasst werden. Es könnten Aufgaben in der Marktüberwachung auf Landesebene anfallen.',
+                    aufsicht: 'Nationale Marktüberwachungsbehörden sind für die Durchsetzung zuständig. Die genaue Ausgestaltung in Deutschland ist noch festzulegen, das BSI wird voraussichtlich eine zentrale Rolle spielen.',
+                    durchfuehrungsgesetze: 'Als EU-Verordnung direkt anwendbar. Nationale Gesetze werden zur Benennung der Marktüberwachungsbehörden und zur Festlegung von Sanktionen benötigt.'
+                }
+            },
+            {
+                id: 'dora',
+                title: 'Digital Operational Resilience Act (DORA)',
+                shortDescription: 'Stärkt die IKT-Sicherheit von Finanzunternehmen und kritischen IKT-Drittdienstleistern.',
+                status: 'inUmsetzung', // Verordnung (EU) 2022/2554
+                relevance: ['finanzsektor', 'cybersicherheit'],
+                veroeffentlichung: '27.12.2022',
+                inkrafttreten: '16.01.2023',
+                geltungsbeginn: '17.01.2025',
+                timelineYear: 2025,
+                details: {
+                    ziel: 'Der Digital Operational Resilience Act (DORA) soll die digitale operationelle Resilienz des EU-Finanzsektors stärken. Er schafft einen harmonisierten Rechtsrahmen für das Management von Informations- und Kommunikationstechnologie (IKT)-Risiken, die Meldung von IKT-Vorfällen, Tests der digitalen Resilienz und das Management von Risiken durch IKT-Drittdienstleister.',
+                    adressaten: 'Nahezu alle Finanzunternehmen in der EU, darunter Banken, Versicherungen, Wertpapierfirmen, Krypto-Dienstleister, sowie kritische IKT-Drittdienstleister (z.B. Cloud-Anbieter), die Dienstleistungen für Finanzunternehmen erbringen.',
+                    auswirkungVerwaltung: 'Landesbanken und landeseigene Versicherungsunternehmen fallen direkt unter DORA. Landesfinanzaufsichtsbehörden müssen ihre Aufsichtspraxis anpassen. Für Einreichung von Informationsregistern bei der BaFin gab es Fristen (z.B. 28. April 2025).',
+                    aufsicht: 'Die zuständigen nationalen Finanzaufsichtsbehörden (in Deutschland BaFin und Deutsche Bundesbank) überwachen die Einhaltung durch Finanzunternehmen. Die Europäischen Aufsichtsbehörden (EBA, EIOPA, ESMA) entwickeln technische Standards und überwachen kritische IKT-Drittdienstleister direkt.',
+                    durchfuehrungsgesetze: 'Als EU-Verordnung direkt anwendbar. Das deutsche Finanzmarktdigitalisierungsgesetz (FinmadiG), das DORA national umsetzt und Zuständigkeiten und Sanktionen regelt, ist in Kraft.'
+                }
+            },
+            {
+                id: 'emfa',
+                title: 'European Media Freedom Act (EMFA)',
+                shortDescription: 'Schützt Medienpluralismus und -freiheit und regelt Transparenz von Medieneigentum.',
+                status: 'inKraftGetreten', // Verordnung (EU) 2024/1083
+                relevance: ['medien', 'grundrechte', 'plattformen'],
+                veroeffentlichung: '17.04.2024',
+                inkrafttreten: '07.05.2024',
+                geltungsbeginn: 'Die meisten Bestimmungen sind ab dem 08.08.2025 anwendbar.',
+                timelineYear: 2025,
+                details: {
+                    ziel: 'Der European Media Freedom Act (EMFA) zielt darauf ab, die redaktionelle Freiheit und den Medienpluralismus im EU-Binnenmarkt zu schützen. Er enthält Bestimmungen zum Schutz journalistischer Quellen, zur Transparenz von Medieneigentum, zur Unabhängigkeit öffentlich-rechtlicher Medien, zur fairen Zuweisung staatlicher Werbung und zur Regulierung der Beziehungen zwischen Medien und sehr großen Online-Plattformen.',
+                    adressaten: 'Mediendiensteanbieter (öffentlich-rechtlich und privat), Journalisten, Mitgliedstaaten (hinsichtlich staatlicher Einflussnahme und Werbung) und sehr große Online-Plattformen (VLOPs) im Kontext ihrer Moderationsentscheidungen zu Medieninhalten.',
+                    auswirkungVerwaltung: 'Landesmedienanstalten werden in die Anwendung und Durchsetzung des EMFA eingebunden sein. Öffentlich-rechtliche Medien der Länder müssen die neuen Anforderungen an redaktionelle Unabhängigkeit und Finanzierungstransparenz erfüllen. Auswirkungen auch auf staatliche Werbepraktiken.',
+                    aufsicht: 'Ein neues Europäisches Gremium für Mediendienste (European Board for Media Services), das aus nationalen Medienregulierungsbehörden besteht und seit Februar 2025 operativ ist, soll eine kohärente Anwendung sicherstellen. Nationale Medienregulierungsbehörden (in Deutschland die Landesmedienanstalten unter Koordination der Direktorenkonferenz der Landesmedienanstalten - DLM) sind primär zuständig.',
+                    durchfuehrungsgesetze: 'Als Verordnung direkt anwendbar, aber nationale Anpassungen, insbesondere im Medienstaatsvertrag und den Landesmediengesetzen, werden zur Konkretisierung von Verfahren und Zuständigkeiten erforderlich sein.'
+                }
+            },
+            {
+                id: 'pld',
+                title: 'Product Liability Directive (PLD) - Produkthaftungsrichtlinie',
+                shortDescription: 'Modernisiert die EU-Produkthaftungsregeln, auch für Software und KI-Systeme.',
+                status: 'inUmsetzung', // Richtlinie (EU) 2024/3002 (tatsächliche Nummer kann leicht abweichen, Datum der Annahme ist hier relevanter)
+                relevance: ['produktsicherheit', 'ki', 'haftung'],
+                veroeffentlichung: 'Voraussichtlich Ende 2024 / Anfang 2025 (nach formeller Annahme)',
+                inkrafttreten: '09.12.2024 (Datum des Inkrafttretens der politischen Einigung, formales Inkrafttreten 20 Tage nach Veröffentlichung im Amtsblatt)',
+                geltungsbeginn: 'Nationale Umsetzung durch Mitgliedstaaten bis ca. Dezember 2026 (24 Monate nach Inkrafttreten). Anwendbar für Produkte, die nach diesem Umsetzungsdatum in Verkehr gebracht werden.',
+                timelineYear: 2026, 
+                details: {
+                    ziel: 'Die novellierte Produkthaftungsrichtlinie modernisiert die EU-Haftungsregeln für fehlerhafte Produkte. Sie stellt klar, dass auch Software, KI-Systeme und digitale Dienstleistungen als Produkte gelten können. Ziele sind die Anpassung an das digitale Zeitalter, die Erleichterung der Beweislast für Geschädigte und die Gewährleistung eines fairen Ausgleichs zwischen den Interessen von Verbrauchern und Herstellern.',
+                    adressaten: 'Hersteller, Importeure und unter bestimmten Umständen auch Händler von Produkten, einschließlich Softwareentwickler und Anbieter von KI-Systemen, sowie Fulfillment-Dienstleister und Betreiber von Online-Marktplätzen.',
+                    auswirkungVerwaltung: 'Indirekte Auswirkungen: Landesverwaltungen als Beschaffer und Nutzer von Software und KI-Systemen könnten von den klareren Haftungsregeln profitieren. Ggf. Anpassungen in der Marktüberwachung, wenn Landesbehörden hierfür zuständig sind.',
+                    aufsicht: 'Die Durchsetzung erfolgt über die nationalen Zivilgerichte im Schadensfall. Marktüberwachungsbehörden sind für die Sicherheit von Produkten zuständig, nicht primär für Haftungsfragen.',
+                    durchfuehrungsgesetze: 'Die Richtlinie muss in nationales Recht umgesetzt werden. Dies erfordert eine Anpassung des deutschen Produkthaftungsgesetzes (ProdHaftG).'
+                }
+            },
+            {
+                id: 'plattformarbeit',
+                title: 'Plattformarbeit-Richtlinie',
+                shortDescription: 'Verbessert die Arbeitsbedingungen von Plattformbeschäftigten und regelt algorithmisches Management.',
+                status: 'inUmsetzung', // Richtlinie vom Rat am 11.03.2024 angenommen, Veröffentlichung im Amtsblatt und Inkrafttreten erfolgt.
+                relevance: ['arbeit', 'ki', 'plattformen'],
+                veroeffentlichung: '24.04.2024 (Richtlinie (EU) 2024/1184)',
+                inkrafttreten: '14.05.2024',
+                geltungsbeginn: 'Nationale Umsetzung durch Mitgliedstaaten bis 14.05.2026.',
+                timelineYear: 2026,
+                details: {
+                    ziel: 'Korrekte Einstufung des Beschäftigungsstatus von Personen, die über digitale Arbeitsplattformen arbeiten. Förderung von Transparenz, Fairness und Rechenschaftspflicht beim algorithmischen Management in der Plattformarbeit.',
+                    adressaten: 'Digitale Arbeitsplattformen (sowohl Online-Plattformen als auch ortsgebundene) und Personen, die über diese Plattformen Arbeit leisten (sowohl Arbeitnehmer als auch Selbstständige).',
+                    auswirkungVerwaltung: 'Landesbehörden für Arbeitsschutz und Arbeitsinspektion erhalten neue Aufgaben bei der Überwachung der Einhaltung der Richtlinie. Es müssen Kriterien zur Feststellung des Arbeitsverhältnisses bei Plattformarbeit beachtet werden. Ggf. sind Anpassungen im Sozialversicherungsrecht und Steuerrecht auf nationaler Ebene notwendig.',
+                    aufsicht: 'Nationale Arbeits- und Sozialgerichte, Arbeitsinspektionen und Datenschutzbehörden (hinsichtlich der Datenverarbeitung durch Algorithmen).',
+                    durchfuehrungsgesetze: 'Die Richtlinie muss in nationales Recht umgesetzt werden. Dies erfordert Anpassungen im Arbeits-, Sozial- und Datenschutzrecht. Ein deutsches Umsetzungsgesetz ist in Vorbereitung.'
+                }
+            },
+            {
+                id: 'digigesrl2', // Präzisiert: Hier ist die neuere Richtlinie zur weiteren Digitalisierung im Gesellschaftsrecht gemeint.
+                title: 'Digitalisierungsrichtlinie II (Gesellschaftsrecht)',
+                shortDescription: 'Erweitert die Nutzung digitaler Werkzeuge und Verfahren im EU-Gesellschaftsrecht zur Vereinfachung grenzüberschreitender Prozesse.',
+                status: 'inUmsetzung', // Richtlinie (EU) 2025/26 (Richtlinie zur Änderung der Richtlinie (EU) 2017/1132)
+                relevance: ['verwaltung', 'wirtschaft', 'digitalisierung'],
+                veroeffentlichung: '19.12.2024 (Datum der Richtlinie selbst, Veröffentlichung im Amtsblatt erfolgte kurz danach)',
+                inkrafttreten: '31.01.2025',
+                geltungsbeginn: 'Nationale Umsetzung durch Mitgliedstaaten bis 31.07.2027.',
+                timelineYear: 2027, 
+                details: {
+                    ziel: 'Weitere Digitalisierung im EU-Gesellschaftsrecht, um grenzüberschreitende Geschäftsaktivitäten zu erleichtern, Bürokratie abzubauen und den EU-weiten Zugang zu Unternehmensinformationen zu verbessern. Einführung einer EU-Gesellschaftsbescheinigung (European Union Company Certificate - EUCC) und Vereinfachung digitaler Nachweise. Stärkung des "Once-Only"-Prinzips.',
+                    adressaten: 'Unternehmen (insbesondere grenzüberschreitend tätig), nationale Unternehmensregister, Notare und andere an gesellschaftsrechtlichen Verfahren beteiligte Akteure.',
+                    auswirkungVerwaltung: 'Landesjustizverwaltungen (zuständig für Registergerichte) und ggf. Wirtschaftsministerien müssen Systeme für digitale Verfahren und die Registervernetzung (BRIS, BORIS, IRI) weiter anpassen und ausbauen. Implementierung des "Once-Only"-Prinzips bei Registeranmeldungen.',
+                    aufsicht: 'Die Aufsicht über die Unternehmensregister obliegt den zuständigen nationalen Behörden (in Deutschland den Registergerichten).',
+                    durchfuehrungsgesetze: 'Die Richtlinie muss bis zum 31. Juli 2027 in nationales Recht umgesetzt werden. Dies wird Anpassungen an bestehenden Gesetzen wie dem DiRUG (Gesetz zur Umsetzung der Digitalisierungsrichtlinie) und DiREG (Gesetz zur Ergänzung der Regelungen zur Umsetzung der Digitalisierungsrichtlinie) erfordern.'
+                }
+            }
+        ];
+
+        const lawsContainer = document.getElementById('laws-container');
+        const searchInput = document.getElementById('search-input');
+        const statusFilter = document.getElementById('status-filter');
+        const relevanceFilter = document.getElementById('relevance-filter');
+        const detailsDialog = document.getElementById('details-dialog');
+        const detailsPanelContent = document.getElementById('details-panel-content');
+        const timelineContainer = document.getElementById('timeline-container');
+        
+        function getStatusDetails(statusKey) {
+            const statusMap = {
+                'anwendbar': { label: 'Anwendbar', colorClass: 'status-anwendbar' },
+                'inKraftGetreten': { label: 'In Kraft getreten', colorClass: 'status-inKraftGetreten' },
+                'inUmsetzung': { label: 'In Umsetzung', colorClass: 'status-inUmsetzung' },
+                'inVerhandlung': { label: 'In Verhandlung', colorClass: 'status-inVerhandlung' },
+                'geplant': { label: 'Geplant', colorClass: 'status-geplant' }
+            };
+            return statusMap[statusKey] || { label: statusKey, colorClass: '' };
+        }
+
+        function getRelevanceLabel(relevanceKey) {
+            const labels = {
+                'datenschutz': 'Datenschutz', 'plattformen': 'Plattformen', 'cybersicherheit': 'Cybersicherheit',
+                'finanzsektor': 'Finanzsektor', 'ki': 'KI', 'gesundheit': 'Gesundheit', 'medien': 'Medien',
+                'verwaltung': 'Verwaltung', 'infrastruktur': 'Infrastruktur', 'produktsicherheit': 'Produktsicherheit',
+                'grundrechte': 'Grundrechte', 'kommunikation': 'Kommunikation', 'wettbewerb': 'Wettbewerb',
+                'industrie': 'Industrie', 'arbeit': 'Arbeit', 'wirtschaft': 'Wirtschaft', 'iot': 'IoT',
+                'identitaet': 'Digitale Identität', 'haftung': 'Haftung', 'forschung': 'Forschung', 'digitalisierung': 'Digitalisierung'
+            };
+            return labels[relevanceKey] || relevanceKey;
+        }
+        
+        function generateTimelineMarkers(laws) {
+            timelineContainer.innerHTML = ''; 
+            const years = [...new Set(laws.map(law => law.timelineYear).filter(year => year != null))].sort((a,b) => a - b);
+            
+            if (years.length === 0) return;
+
+            const minYear = Math.min(...years);
+            const maxYear = Math.max(...years);
+            const displayMaxYear = (maxYear === minYear) ? maxYear + 1 : maxYear;
+            const yearSpan = Math.max(1, displayMaxYear - minYear); 
+
+
+            years.forEach(year => {
+                const marker = document.createElement('div');
+                marker.className = 'timeline-marker';
+                marker.textContent = year;
+                
+                let positionPercent = 0;
+                if (yearSpan > 0) {
+                     positionPercent = ((year - minYear) / yearSpan) * 90 + 5; 
+                } else if (years.length === 1) {
+                    positionPercent = 50; 
+                }
+                marker.style.left = `${Math.max(2, Math.min(98, positionPercent))}%`; 
+                timelineContainer.appendChild(marker);
+            });
+        }
+
+        function renderLawCards(lawsToRender) {
+            lawsContainer.innerHTML = '';
+            if (lawsToRender.length === 0) {
+                lawsContainer.innerHTML = '<p class="no-results">Keine Regulierungsvorhaben entsprechen Ihren Kriterien.</p>';
+                return;
+            }
+
+            lawsToRender.sort((a, b) => (a.timelineYear || Infinity) - (b.timelineYear || Infinity) || a.title.localeCompare(b.title));
+
+
+            lawsToRender.forEach(law => {
+                const card = document.createElement('article');
+                card.className = 'card';
+                card.dataset.id = law.id;
+                const statusInfo = getStatusDetails(law.status);
+                
+                if (statusInfo.colorClass === 'status-anwendbar') card.style.borderTopColor = '#28a745';
+                else if (statusInfo.colorClass === 'status-inKraftGetreten') card.style.borderTopColor = '#17a2b8';
+                else if (statusInfo.colorClass === 'status-inUmsetzung') card.style.borderTopColor = '#ffc107';
+                else if (statusInfo.colorClass === 'status-inVerhandlung') card.style.borderTopColor = '#fd7e14';
+                else if (statusInfo.colorClass === 'status-geplant') card.style.borderTopColor = '#6f42c1';
+                else card.style.borderTopColor = 'var(--medium-gray)';
+
+
+                let dateInfoHtml = '';
+                if(law.veroeffentlichung) dateInfoHtml += `Veröffentlicht: ${law.veroeffentlichung}<br>`;
+                if(law.inkrafttreten) dateInfoHtml += `Inkrafttreten: ${law.inkrafttreten}<br>`;
+                if(law.geltungsbeginn) dateInfoHtml += `Geltungsbeginn: ${law.geltungsbeginn}`;
+
+
+                card.innerHTML = `
+                    <h2>${law.title}</h2>
+                    <p>${law.shortDescription}</p>
+                    <p class="date-info">${dateInfoHtml}</p>
+                    <div class="labels-container">
+                        <span class="label ${statusInfo.colorClass}">${statusInfo.label}</span>
+                        ${law.relevance.map(rel => `<span class="label label-relevance">${getRelevanceLabel(rel)}</span>`).join('')}
+                    </div>
+                `;
+                card.addEventListener('click', () => showDetails(law));
+                lawsContainer.appendChild(card);
+            });
+        }
+
+        function showDetails(law) {
+            const statusInfo = getStatusDetails(law.status);
+            const sanitizeHTML = (str) => {
+                if (typeof str !== 'string') return '';
+                const temp = document.createElement('div');
+                temp.textContent = str;
+                return temp.innerHTML;
+            };
+
+            detailsPanelContent.innerHTML = `
+                <div class="details-panel-header">
+                    <h2>${sanitizeHTML(law.title)}</h2>
+                    <span class="status-pill ${statusInfo.colorClass}">${statusInfo.label}</span>
+                    <button class="close-button" id="close-details-button" aria-label="Details schließen">×</button>
+                </div>
+                
+                <div class="details-section">
+                    <h3>Zielsetzung</h3>
+                    <p>${sanitizeHTML(law.details.ziel)}</p>
+                </div>
+                <div class="details-section">
+                    <h3>Adressaten</h3>
+                    <p>${sanitizeHTML(law.details.adressaten)}</p>
+                </div>
+                <div class="details-section">
+                    <h3>Auswirkungen auf die Landesverwaltung</h3>
+                    <p>${sanitizeHTML(law.details.auswirkungVerwaltung)}</p>
+                </div>
+                <div class="details-section">
+                    <h3>Aufsicht und Durchsetzung</h3>
+                    <p>${sanitizeHTML(law.details.aufsicht)}</p>
+                </div>
+                <div class="details-section">
+                    <h3>Nationale Umsetzung / Durchführungsgesetze</h3>
+                    <p>${sanitizeHTML(law.details.durchfuehrungsgesetze)}</p>
+                </div>
+                <div class="details-section">
+                    <h3>Wichtige Daten</h3>
+                    <p>
+                        ${law.veroeffentlichung ? `<strong>Veröffentlichung:</strong> ${sanitizeHTML(law.veroeffentlichung)}<br>` : ''}
+                        ${law.inkrafttreten ? `<strong>Inkrafttreten:</strong> ${sanitizeHTML(law.inkrafttreten)}<br>` : ''}
+                        <strong>Geltungsbeginn:</strong> ${sanitizeHTML(law.geltungsbeginn)}
+                    </p>
+                </div>
+            `;
+            detailsDialog.showModal();
+            document.getElementById('close-details-button').addEventListener('click', () => detailsDialog.close());
+        }
+
+        function applyFilters() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const statusValue = statusFilter.value;
+            const relevanceValue = relevanceFilter.value;
+
+            const filteredLaws = digitalLaws.filter(law => {
+                const matchesSearch = searchTerm === '' ||
+                    law.title.toLowerCase().includes(searchTerm) ||
+                    law.shortDescription.toLowerCase().includes(searchTerm) ||
+                    Object.values(law.details).some(detailText => typeof detailText === 'string' && detailText.toLowerCase().includes(searchTerm)) ||
+                    law.relevance.map(getRelevanceLabel).some(label => label.toLowerCase().includes(searchTerm));
+                
+                const matchesStatus = statusValue === 'all' || law.status === statusValue;
+                const matchesRelevance = relevanceValue === 'all' || law.relevance.includes(relevanceValue);
+
+                return matchesSearch && matchesStatus && matchesRelevance;
+            });
+            renderLawCards(filteredLaws);
+        }
+
+        searchInput.addEventListener('input', applyFilters);
+        statusFilter.addEventListener('change', applyFilters);
+        relevanceFilter.addEventListener('change', applyFilters);
+
+        detailsDialog.addEventListener('click', (event) => {
+            if (event.target === detailsDialog) {
+                detailsDialog.close();
+            }
+        });
+        
+        document.getElementById('last-updated-date').textContent = new Date().toLocaleDateString('de-DE', {
+            year: 'numeric', month: 'long', day: 'numeric' 
+        });
+
+        // Initialisierung
+        renderLawCards(digitalLaws);
+        generateTimelineMarkers(digitalLaws);
+        applyFilters(); 
+    </script>
+</body>
+</html>
